@@ -1,79 +1,121 @@
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 /*
- * Name: <your name>
- * EID: <your EID>
+ * Name: Aria Pahlavan
+ * EID: AP44342
  */
 
-public class Graph implements Program2{
-	// n is the number of ports
-	private int n;
-    
-	// Edge is the class to represent an edge between two nodes
-	// node is the destination node this edge connected to
-	// time is the travel time of this edge
-	// capacity is the capacity of this edge
-	// Use of this class is optional. You may make your own, and comment
-	// this one out.
-	private class Edge{
-		public int node;
-		public int time;
-		public int capacity;
-		public Edge(int n, int t, int c){
-			node = n;
-			time = t;
-			capacity = c;
-		}
+public class Graph implements Program2 {
+    private final int V;
+    private final LinkedList<Edge>[] adj;
+    private int E;
 
-		// prints out an Edge.
-		public String toString() {
-			return "" + node;
-		}
-	}
+    /**
+     * Construct a graph
+     * Hint: Do you need dest functions here?
+     *
+     * @param x number of vertices
+     */
+    public Graph(int x) {
+        V = x;
+        adj = (LinkedList<Edge>[]) new LinkedList[V];
 
-	// Here you have to define your own data structure that you want to use
-	// to represent the graph
-	// Hint: This include an ArrayList or many ArrayLists?
-	// ....
+        for (int i = 0; i < adj.length; i++)
+            adj[i] = new LinkedList<>();
+    }
 
+    /**
+     * @return number of vertices in the graph
+     */
+    public int V() {
+        return V;
+    }
 
-	// This function is the constructor of the Graph. Do not change the parameters
-	// of this function.
-	//Hint: Do you need other functions here?
-	public Graph(int x) {
-		n = x;
-	}
-    
-	// This function is called by Driver. The input is an edge in the graph.
-	// Your job is to fix this function to generate your graph.
-	// Do not change its parameters or return type.
-	// Hint: Here is the place to build the graph with the data structure you defined.
-	public void inputEdge(int port1, int port2, int time, int capacity) {
-		return;
-	}
+    /**
+     * @return number of edged in the graph
+     */
+    public int E() {
+        return E;
+    }
 
-	// This function is the solution for the Shortest Path problem.
-	// The output of this function is an int which is the shortest travel time from source port to destination port
-	// Do not change its parameters or return type.
-	public int findTimeOptimalPath(int sourcePort, int destPort) {
-		return -1;
-	}
+    /**
+     * add a new edge to graph
+     *
+     * @param port1    first port vertex
+     * @param port2    second port vertex
+     * @param time     time to travel
+     * @param capacity max capacity can be moved
+     */
+    public void inputEdge(int port1, int port2, int time, int capacity) {
+        adj[port1].add(new Edge(port2, time, capacity));
+        adj[port2].add(new Edge(port1, time, capacity));
+        E++;
+    }
 
-	// This function is the solution for the Widest Path problem.
-	// The output of this function is an int which is the maximum capacity from source port to destination port 
-	// Do not change its parameters or return type.
-	public int findCapOptimalPath(int sourcePort, int destPort) {
-		return -1;
-	}
+    /**
+     * Solution for the Shortest Path problem
+     *
+     * @param sourcePort source vertex
+     * @param destPort   destination vertex
+     * @return the shortest travel travelTime from source port to destination port
+     */
+    public int findTimeOptimalPath(int sourcePort, int destPort) {
+        OptimalTime ot = new OptimalTime(this, sourcePort, destPort, Edge::time);
+        return ot.optimalTime();
+    }
 
-	// This function returns the neighboring ports of node.
-	// This function is used to test if you have contructed the graph correct.
-	public ArrayList<Integer> getNeighbors(int node) {
-		ArrayList<Integer> edges = new ArrayList<Integer>();
-		// ...
-		return edges;
-	}
+    /**
+     * Solution for the Widest Path problem
+     *
+     * @param sourcePort source vertex
+     * @param destPort   destination vertex
+     * @return the maximum capacity from source port to destination port
+     */
+    public int findCapOptimalPath(int sourcePort, int destPort) {
+        OptimalWeight op = new OptimalWeight(this, sourcePort, destPort);
+        return op.bottleneck();
+    }
 
-	public int getNumPorts() {
-		return n;
-	}
+    /**
+     * @param node a vertex
+     * @return the neighboring vertices (i.e. ports) of {@code node}
+     */
+    public ArrayList<Integer> getNeighbors(int node) {
+        return adj[node].stream()
+                        .map(edge -> edge.dest())
+                        .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    /**
+     * @param v the vertex whose adjacency list is being retrieved
+     * @return vertices adjacent to {@code v}
+     */
+    public LinkedList<Edge> adjOf(int v) {
+        return adj[v];
+    }
+
+    /**
+     * @return the number of vertices in the graph
+     */
+    public int getNumPorts() {
+        return V;
+    }
+
+    @Override
+    public String toString() {
+        String adjListStr = IntStream.range(0, V)
+                                     .mapToObj(i -> "\t\t(" + i + ')'
+                                                    + adj[i].stream()
+                                                            .map(v -> "->"+v)
+                                                            .reduce(String::concat).orElse("") + '\n')
+                                     .reduce(String::concat).orElse("[NO ADJACENCY LIST]");
+
+        return "Graph{" +
+               "\n\tV=" + V +
+               ", \n\tE=" + E +
+               ", \n\tadj=\n" + adjListStr +
+               '}';
+    }
 }
